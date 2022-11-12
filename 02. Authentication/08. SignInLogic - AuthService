@@ -1,0 +1,80 @@
+SignIn Logic
+    Definition:
+      - We want to implement the logic about the signIn method
+      - Here we need to:
+        - get the user
+          - If not exist => Throw exception
+        - check if passwords matches
+          - If not matches => Throw exception
+        - Return user
+    
+    prisma.schemaName.find:
+      - We have various options to find/query a record:
+        - .findUnique() => Used to find by "id" or any field that is @unique
+        - .findOne() => Used to find by any field
+        - .findMany()
+        - .findUniqueOrThrow()
+
+    Implementation:
+      - .findUnique() method, we pass:
+       - { where: {} } => we define the fields to query e.g email: dto.email
+      - if (!user) is falsy => throw exception
+      - We use argon.verify(hash, stringPassword) => check password matches
+
+
+
+
+-- src/auth/auth.service.ts
+
+import { PrismaService } from './../prisma/prisma.service';
+import { ForbiddenException, Injectable } from '@nestjs/common';
+import { User, Bookmark } from '@prisma/client';
+import * as argon from 'argon2';
+import { AuthDto } from './dto';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime';
+@Injectable()
+export class AuthService {
+  constructor(private prisma: PrismaService) {}
+  async signup(dto: AuthDto) {
+    // generate the password hash
+    const hash = await argon.hash(dto.password);
+
+    //  Save the new user in the db
+
+    try {
+      const user = await this.prisma.user.create({
+        data: {
+          email: dto.email,
+          hash,
+        },
+      });
+
+      delete user.hash;
+      // return the saved user
+      return user;
+    } catch (error) {
+      if (error instanceof PrismaClientKnownRequestError) {
+        if (error.code === 'P2002') {
+          throw new ForbiddenException('Credentials taken');
+        }
+      }
+      throw error;
+    }
+  }
+
+  async signin(dto: AuthDto) {
+    const user = await this.prisma.user.findUnique({
+      where: {
+        email: dto.email,
+      },
+    });
+
+    if (!user) throw new ForbiddenException('Credentials incorrect');
+
+    const pwMatches = await argon.verify(user.hash, dto.password);
+    if (!pwMatches) throw new ForbiddenException('Credentials incorrect');
+
+    delete user.hash;
+    return user;
+  }
+}

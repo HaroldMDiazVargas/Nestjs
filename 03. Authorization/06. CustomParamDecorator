@@ -1,0 +1,94 @@
+Custom param decorator
+    Definition:
+      - We can also make a custom decorator to decorate in the "request" object and get
+        that user object WITHOUT using the @Request() decorator
+      - A param decorator is just a decorator used in our params!
+        e.g In angular we have @Inject()
+      
+    List of param decorators => https://docs.nestjs.com/custom-decorators
+      - @Request(), @Req()
+      - @Response(), @Res()
+      - @Next()
+      - @Session()
+      - @Param(param?: string)
+      - @Body(param?: string)
+      - @Query(param?: string)
+      - @Headers(param?: string)
+      - @Ip()
+      - @HostParam()
+    
+    Create custom decorator:
+      createParamDecorator function:
+       - This is a function defined in @nestjs/common; we use to create our custom 
+         decorator
+       - This takes:
+         - Arrow function:
+           - data => By default is unknown, we don't need to pass. 
+                     We use if we want to pass default params, so we can get some 
+                     specific properties!
+           - ctx => Get the execution context of the request:
+                    - this can call different methods, we can use:
+                      - Http => ctx.switchToHttp()
+                      - WebSockets => ctx.switchToWs()
+                      - Rpc => ctx.switchToRpc(), for like microservices
+                    - .getNext()
+                    - .getRequest()  => This is just like express.request
+                    - .getResponse()
+          - This returns:
+            - ParameterDecorator class!
+    @User() decorator:
+      - We want to create this decorator, so we will get directly the req.user!
+      - The idea is avoid to use "req.user", instead we can use just "user"
+      
+    Create @User() decorator:
+      - export a variable(which is a class) because we call the createParamDecorator() 
+        which returns a class: ParameterDecorator
+      - We need to create the arrow function we showed before. Here we just swith to Http
+        and getRequest() !
+      - We create a condition for data arg, if we pass it => so we return the corresponding
+        property. All this logic is inside in the same code block of the arrow function
+
+    Usage:
+     - We just use as a normal parameter decorator!
+     - Ofcourse we don't pass this ID in real app, we are demostrate how to use and create
+       a custom param decorator!
+
+
+
+-- src/auth/decorator/get-user.decorator.ts
+import { createParamDecorator, ExecutionContext } from '@nestjs/common';
+
+export const GetUser = createParamDecorator(
+  (data: string | undefined, ctx: ExecutionContext) => {
+    const request = ctx.switchToHttp().getRequest();
+
+    if (data) {
+      return request.user[data];
+    }
+    return request.user;
+  },
+);
+
+
+
+-- src/auth/auth.controller.ts
+import { JwtGuard } from './../auth/guard/jwt.guard';
+import { Request } from 'express';
+import { Controller, Get, Req, UseGuards } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
+import { GetUser } from 'src/auth/decorator';
+import { User } from '@prisma/client';
+
+@UseGuards(JwtGuard)
+@Controller('users')
+export class UserController {
+  // @UseGuards(AuthGuard('jwt'))
+  @Get('me')
+  getMe(@GetUser("id") userId: number) {
+    return userId;
+  }
+}
+
+
+-- Postman (will response to client the ID)
+6 

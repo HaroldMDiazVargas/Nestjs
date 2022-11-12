@@ -1,0 +1,146 @@
+Authentication Library
+    Definition:
+     - Until here we have made the authentication verifying the credentials like email and
+       password. However we need to take a Authentication Mechanism depending of 
+       requirements
+     - The steps are:
+       - Manage authenticated state:
+         - We need to see a portable token such as JWT or create an Express session
+       - Attach info about the authenticated user to the Request object for futher use:
+         - When user authenticate in the server we can access to their info credentials
+           when the request is emitted. So we can guard routes.
+
+    Passport:
+     - authentication framework for express.js
+     - Used by NestJS
+     - We can log with:
+       - fb
+       - google
+       - auth0
+       - twitter
+       - jwt => so this jsonwebtoken library can be used by passport famework!
+       - ...
+    
+    Installation for usage with JWT:
+     - We run:
+       - npm install --save @nestjs/passport passport @nestjs/jwt passport-jwt
+         - passport => This is the passport library
+         - @nestjs/passport => porting/module for nestjs
+         - @nestjs/jwt => module for nestjs
+         - passport-jwt => jwt package for passport
+       - npm install --save-dev- @types/passport-jwt
+         - This is for install types because it doesn't have typescript in that repo
+
+    Usage JwtModule:
+      - This is for sign our jwt(create)
+      - We need to register on AuthModule imports:[] metadata
+      - We call a method:
+        - .register({}); we want it blank because in most use cases we're not going to
+                         use a refresh token, most of time when we deal with jwt we will have
+                         a refresh token:
+                         - different secret
+                         - different exp date 
+                         from the access token
+
+                        but we can pass something like:
+                         - secret
+                         - expiration date
+    
+
+    Usage JwtService: Create jwt:
+      - We import as DI in our AuthService constructor => private jwt: JwtService
+      - With this we have methods:
+        - .signAsync(payload, options) => Allows us to create a new token (This actually is from jwt library)
+          - options have => secret, expiresIn, ...
+          - This method need to await!
+        
+
+
+
+     
+                    
+-- src/auth/auth.service.ts
+
+import { PrismaService } from './../prisma/prisma.service';
+import { ForbiddenException, Injectable } from '@nestjs/common';
+import { User, Bookmark } from '@prisma/client';
+import * as argon from 'argon2';
+import { AuthDto } from './dto';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime';
+import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
+
+@Injectable()
+export class AuthService {
+  constructor(
+    private prisma: PrismaService,
+    private jwt: JwtService,
+    private config: ConfigService,
+  ) {}
+  async signup(dto: AuthDto) {
+    // generate the password hash
+    const hash = await argon.hash(dto.password);
+
+    //  Save the new user in the db
+
+    try {
+      const user = await this.prisma.user.create({
+        data: {
+          email: dto.email,
+          hash,
+        },
+      });
+      return this.signToken(user.id, user.email);
+    } catch (error) {
+      if (error instanceof PrismaClientKnownRequestError) {
+        if (error.code === 'P2002') {
+          throw new ForbiddenException('Credentials taken');
+        }
+      }
+      throw error;
+    }
+  }
+
+  async signin(dto: AuthDto) {
+    const user = await this.prisma.user.findUnique({
+      where: {
+        email: dto.email,
+      },
+    });
+
+    if (!user) throw new ForbiddenException('Credentials incorrect');
+
+    const pwMatches = await argon.verify(user.hash, dto.password);
+    if (!pwMatches) throw new ForbiddenException('Credentials incorrect');
+
+    return this.signToken(user.id, user.email);
+  }
+
+  async signToken(
+    userId: number,
+    email: string,
+  ): Promise<{ access_token: string }> {
+    const payload = {
+      sub: userId,
+      email,
+    };
+
+    const secret = this.config.get('JWT_SECRET');
+
+    const token = await this.jwt.signAsync(payload, {
+      expiresIn: '15m',
+      secret: secret,
+    });
+
+    return {
+      access_token: token,
+    };
+  }
+}
+
+
+    
+
+    
+
+

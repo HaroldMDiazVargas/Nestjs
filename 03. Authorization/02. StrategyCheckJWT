@@ -1,0 +1,84 @@
+Strategy jwt
+    Definition:
+      - This is the way to check if the jwt is valid => strategy!
+      - Used to protect our routes:
+        - See exist a valid jwt in header
+      - In this case we will define a strategy for JWT, but we can also define for:
+        - login fb, google, so on
+    
+    Extending PassportStrategy:
+      Class definition:
+       - We create an Injectable class that extends => PassportStrategy(Strategy, "name")
+         -We can replace "name" like a kind of identifier. By default is "jwt"  
+      Constructor:
+       - In the constructor we call the parent class using super() and pass 
+         and object defining things like:
+         - where extract the jwt e.g from header as bearer
+         - secret to decoded the jwt
+         - ignore the expiration => used for tests
+      validate() method:
+       - This method is called automatically when the strategy is executed and has verified
+         the JWT signature and decode the JSON. So then call this method passing the JSON
+       - This can be used to extract payload/some params in the server
+       - When we write "return payload", this will build a "user" object based on the 
+         value of our validate() and attach on the "Request" object => req.user
+       - Also here we can define "asyncrhonous" operation we need maybe to valid across
+         the database!
+
+    Indicating that use this strategy:
+      AuthModule:
+       - In this module we only need to pass on providers our new JwtStrategy
+       - This way nestjs is aware that this is the strategy for valid our tokens
+       - This is because in this AuthModule is where we import => JwtModule.register({})
+
+
+
+
+
+
+-- src/auth/strategy/index.ts
+export * from './jwt.strategy';
+
+
+
+
+-- src/auth/strategy/jwt.strategy.ts
+
+import { ConfigService } from '@nestjs/config';
+import { Injectable } from '@nestjs/common';
+import { PassportStrategy } from '@nestjs/passport';
+import { ExtractJwt, Strategy } from 'passport-jwt';
+
+@Injectable()
+export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
+  constructor(config: ConfigService) {
+    super({
+      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      secretOrKey: config.get('JWT_SECRET'),
+    });
+  }
+
+  validate(payload: any) {
+    console.log({
+      payload,
+    });
+    return payload;
+  }
+}
+
+
+
+-- src/auth/auth.module.ts
+
+import { JwtStrategy } from './strategy';
+import { AuthService } from './auth.service';
+import { AuthController } from './auth.controller';
+import { Module } from '@nestjs/common';
+import { JwtModule } from '@nestjs/jwt';
+
+@Module({
+  imports: [JwtModule.register({})],
+  controllers: [AuthController],
+  providers: [AuthService, JwtStrategy],
+})
+export class AuthModule {}

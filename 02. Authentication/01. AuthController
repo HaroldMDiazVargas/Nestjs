@@ -1,0 +1,49 @@
+AuthController
+    Definition:
+      - We want to define a new module, in which metadata will be defined as:
+        - providers:[AuthService]
+        - controller:[AuthController]
+    
+    Controller:
+      Decorator
+       - We jut use @Controller() decorator to define a controller, we can 
+         pass a name e.g @Controller('auth'). This allows us to acces to API as:
+         - REQUEST localhost:3000/auth/
+
+      Handle request
+       - Here we can use couple of decorators to handle the request from client:
+         - @Post("signup") => POST auth/signup
+         - @Get("name")
+    
+      Access body:
+        Using express under the hood:
+         - We don't do this actually, is just to demostrate we can access using express
+           using @Req() decorator we access to the req.body, req.headers,...
+        
+        Using decorator @Body():
+          - With this decorator we access to the body of the request directly!
+    
+
+
+-- src/auth/auth.controller.ts
+
+import { AuthDto } from './dto/auth.dto';
+import { AuthService } from './auth.service';
+import { Body, Controller, Post, Req } from '@nestjs/common';
+import { Request } from 'express';
+
+@Controller('auth')
+export class AuthController {
+  constructor(private authService: AuthService) {}
+
+  @Post('signup')
+  signup(@Body() dto: AuthDto) {
+    console.log(dto);
+    return this.authService.signup();
+  }
+
+  @Post('signin')
+  signin() {
+    return this.authService.signin();
+  }
+}

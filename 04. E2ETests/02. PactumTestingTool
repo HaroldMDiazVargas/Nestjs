@@ -1,0 +1,19 @@
+Pactum
+    Definition:
+      - Library that we use to implment e2e tests
+      - Allows us to save a lot of time for testing our APIs, very nice to work
+      - Works very well with GraphQL
+    
+    supertest library:
+      - By default Nestjs uses this for the E2E test but we will use pactumjs
+      - Also to take into account NestJs uses Jest Test framework
+
+    PactumJs:
+      Installation:
+       - npm install -D pactum    
+
+    Consideratios
+      Set test database:
+       - We want to keep separate our test db from the dev db
+      Set up the database 
+       - set up prisma service to be cleaned up everytime we run our test

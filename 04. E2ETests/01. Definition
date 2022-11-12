@@ -1,0 +1,27 @@
+Complex App
+    Definition:
+      - Like our app starts to grow up, we will end with much Endpoints/files/services, ...
+      - This makes tedious to test with Postman
+    
+    Unit testing:
+      - Just test at unit level!
+      - Simple functions isolated, mocking services, so on!
+
+    Integration Testing:
+      - Can test many parts such as:
+        - is signin() token sign correctly
+        - exepction throws are correctly
+      - Nestjs thanks to its architecture-modular can integrate various modules 
+        on different integration tests very easily, e.g:
+        - test auth with user and prisma but without bookmark
+        - so on
+        
+    E2E Testing:
+      - Verifies very high level usage journey of our app:
+        - Sign in
+        - Request profiel
+        - User does this.. does that...
+      
+    
+
+    

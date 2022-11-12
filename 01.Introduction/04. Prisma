@@ -1,0 +1,130 @@
+Prisma
+    ORM(Object-Relational Mapping)
+      - technique that lets you query and manipulate data from a database using an 
+        object-oriented paradigm. When talking about ORM, most people are referring 
+        to a library that implements the Object-Relational Mapping technique, 
+        hence the phrase "an ORM"
+      - An ORM library is a completely ordinary library written in your language of choice
+        that encapsulates the code needed to manipulate the data, so you don't use SQL 
+        anymore; you interact directly with an object in the same language you're using.
+      - In Simple words is a QUERY!
+
+    Benefits:
+      - Inutitive data model
+      - Automated migrations
+      - type-safety => This means that will generate TypeScript types for our models/schema
+      - auto-completion
+      - Easy to use
+    
+    Installation:
+      - npm i prisma --save-dev
+      - This install:
+        - prisma-cli => create schema, run migrations, deploy mgiration into database
+        - prisma client => Prisma has different clients, one we will use is JavaScript
+    
+    Init prisma:
+      - npx prisma init
+        - .env => Environment variables
+                 - Here we define our DatabaseURL connection
+                 e.g DATABASE_URL="mysql://harold:1234@localhost:3306/mydb"
+        - prisma/schema.prisma => Where we declare our models
+    
+    schema.prisma file:
+      - generator client {} => is define the prisma client(javascript)
+      - datasource db {} => define our database the provider and the URL
+
+    models: => https://www.prisma.io/docs/concepts/components/prisma-schema/data-model
+      - We define our models just using "model modelName {}"
+      - These models are map to:
+        - Tables => If we connect a SQL database
+        - Collections => If we connect a NoSQL database
+    
+
+    Migrate:
+      - Run => npx prisma migrate dev
+        - Read schema and generate the migrations
+        - This will place the schemas to our database we have defined in the URL connection
+        - This will create a new folder:
+          - prisma/migrations/migration.sql => This is source code with the schema !
+
+    Generate:
+      - Run => npx prisma generate
+        - This will create typescript interface classes for our schemas
+        - So we can directly use these classes in our code!!
+
+    Studio:
+      - Run => npx prisma studio
+      - Connect the database in a port, this allows us to explore database in browser
+      
+
+
+
+
+-- .env
+DATABASE_URL="mysql://harold:1234@localhost:3306/mydb"
+
+
+
+
+-- prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id Int @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  email String
+  hash String
+
+  firtName String?
+  lastName String?
+}
+
+model Bookmark {
+  id Int @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+
+  title String
+  description String?
+  link String
+}
+
+
+
+
+
+-- prisma/migrations/migration.sql
+-- CreateTable
+CREATE TABLE `User` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updatedAt` DATETIME(3) NOT NULL,
+    `email` VARCHAR(191) NOT NULL,
+    `hash` VARCHAR(191) NOT NULL,
+    `firtName` VARCHAR(191) NULL,
+    `lastName` VARCHAR(191) NULL,
+
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `Bookmark` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updatedAt` DATETIME(3) NOT NULL,
+    `title` VARCHAR(191) NOT NULL,
+    `description` VARCHAR(191) NULL,
+    `link` VARCHAR(191) NOT NULL,
+
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;

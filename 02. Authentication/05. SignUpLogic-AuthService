@@ -1,0 +1,72 @@
+SignUp logic
+    Definition:
+      - Now we can implement the logic in the AuthService once we receive the 
+        dto
+      - Until here we are safe/sure that we're working with the correct data because 
+        we implement the validation before
+    
+    Hash:
+      - We need to generate the hash based on the password
+        - bcrypt
+          Fine solution, but it has a constraint:
+          - verificaion algorithm limits only to first 72 bytes
+
+        - node-argon2
+          Is a better solution overall    
+
+    Argon2:
+      Installation
+       - npm install argon2
+      
+      Usage
+        - .hash(password)
+          With this method we can hash our password which is a string
+          We need to "await" this because it returns the hash asynchronously
+    
+
+    Create new user
+      - .prisma.user.create({})
+        This method allows us to create a new record of the user schema; this takes:
+        - data: {} => Here we pass the key:value corresponding of the user data
+        - select: {} => With this optional object we can select which data we want to 
+                        return from this method
+        Also remember this is asynchronous operation!
+
+
+
+
+
+-- src/auth/auth.service.ts
+import { PrismaService } from './../prisma/prisma.service';
+import { Injectable } from '@nestjs/common';
+import { User, Bookmark } from '@prisma/client';
+import * as argon from 'argon2';
+import { AuthDto } from './dto';
+@Injectable()
+export class AuthService {
+  constructor(private prisma: PrismaService) {}
+  async signup(dto: AuthDto) {
+    // generate the password hash
+    const hash = await argon.hash(dto.password);
+
+    //  Save the new user in the db
+    const user = await this.prisma.user.create({
+      data: {
+        email: dto.email,
+        hash,
+      },
+      select: {
+        id: true,
+        email: true,
+        createdAt: true,
+      },
+    });
+
+    // return the saved user
+    return user;
+  }
+
+  signin() {
+    return { msg: 'I have signed in' };
+  }
+}

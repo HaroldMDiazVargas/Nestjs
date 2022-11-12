@@ -1,0 +1,36 @@
+Scripts to run
+    Definition:
+      - If we are using docker to create database image is a good idea to create 
+        a custom script in our json file to delete and create again the database!
+      - Also like we are using prisma, is a good idea to create a custom script to 
+        migrate the database
+      These two scripts should be in a SINGLE script, so we can create a 3rd new 
+      script that executes these two
+    
+    Scripts:
+      Docker:
+       - If we are using docker we can create these two scripts such as:
+         - "db:dev:rm": "docker compose rm dev-db -s -f -v"
+         - "db:dev:up": "docker compose up dev-db -d"
+      Prisma:
+       - We want to create a custom script to migrate:
+         - "prisma:dev:deploy": "prisma migrate deploy"
+      Combine these scripts:
+       - yarn:
+         - "db:dev:restart": "yarn db:dev:rm && yarn db:dev:up && sleep 1 && yarn prisma:dev:deploy"
+       - npm:
+         - "db:dev:restart": "npm run db:dev:rm && npm run db:dev:up && sleep 1 && npm run prisma:dev:deploy"
+
+    Notes: "sleep" is used to wait for migration because can happen that in a slow 
+           machine is not created yet our database!
+
+    Running:
+      - So everytime we want to restart our database and apply migration, we run 
+        the last script. This allows us to save time!
+
+
+-- scripts:
+    "prisma:dev:deploy": "prisma migrate deploy",
+    "db:dev:rm": "docker compose rm dev-db -s -f -v",
+    "db:dev:up": "docker compose up dev-db -d",
+    "db:dev:restart": "yarn db:dev:rm && yarn db:dev:up && sleep 1 && yarn prisma:dev:deploy",

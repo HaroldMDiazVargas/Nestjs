@@ -1,0 +1,72 @@
+ConfigModule
+    Definition:
+      - We never hard-code our database connection string or things like that in our src code
+      - So we use a special module in nestj
+    
+    Config Module:
+      Installation:
+       - We run => ❯ npm install @nestjs/config
+      Usage:
+       - We can import in our AppModule(root module)
+       - We can put in custom module and implement there, if:
+         - Validation, if the variables defined should be e.g string, number
+      UnderHood:
+       - This modules uses "dotenv" library
+
+    SetUp Module:
+      - It requires a .forRoot({}) option
+
+    ConfigService:
+      - We use this service injected where we need. This has a method called:
+        - .get("fieldName") => So we can access to our data stored in .env!
+
+
+-- app.module.ts
+import { Module } from '@nestjs/common';
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
+import { AuthModule } from './auth/auth.module';
+import { UserModule } from './user/user.module';
+import { BookmarkModule } from './bookmark/bookmark.module';
+import { PrismaModule } from './prisma/prisma.module';
+import { ConfigModule } from '@nestjs/config';
+
+@Module({
+  imports: [
+    AuthModule,
+    UserModule,
+    BookmarkModule,
+    PrismaModule,
+    ConfigModule.forRoot({
+      isGlobal: true,
+    }),
+  ],
+  controllers: [AppController],
+  providers: [AppService],
+})
+export class AppModule {}
+
+
+
+-- .env
+DATABASE_URL='mysql://harold:1234@localhost:3306/mydb'
+
+
+
+-- src/prisma/prisma.service.ts
+import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { PrismaClient } from '@prisma/client';
+
+@Injectable()
+export class PrismaService extends PrismaClient {
+  constructor(config: ConfigService) {
+    super({
+      datasources: {
+        db: {
+          url: config.get('DATABASE_URL'),
+        },
+      },
+    });
+  }
+}

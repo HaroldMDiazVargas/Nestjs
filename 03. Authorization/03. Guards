@@ -1,0 +1,78 @@
+Guards
+    Definition:
+      - Guard is a function that  will stand in front of the RouteHandler(Endpoint)
+      - Will allow/not allow the executio nof that Endpoint(Protect routes)
+      - Will check for the Strategy:
+        - If jwt strategy is correct => Allow execution of a route
+        - If not => Block the execution
+      
+    Logic behind guard:
+      - All guards are classes defined in Nestjs extends the  CanActivate interface and is anonotated
+        with @Injectable()
+    
+    Guards vs Middleware(express):
+      - On Express we use these middleware but are dum because doesn't know never
+        which handler will be executed after calling next() => passing control 
+      - Guards hace access to the ExecutionContext instance, and know exactly 
+        what's going to be executed after! => DRY and declarative!
+
+    Guards in Nestjs:
+      - We can create our custom guards
+      - We can use a guard already made from @nestjs/passport => AuthGuard()
+        This guard already comes to work with our PassportStrategy!
+
+    Protecting routes:
+      Level:
+       - We can protect in three levels:
+         - Controller level
+         - Route level
+         - Whole app level
+       
+      @UseGuards() decorator:
+       - This decorator takes => Guard
+
+
+    AuthGuard():
+      - This guard takes our strategy, so we can pass its identifier:
+        - "jwt" => By default for Stratefy from passport/jwt!
+    
+   
+
+
+-- Postman
+Request:
+  GET http://localhost:3000/users/me
+Response:
+  {
+      "statusCode": 401,
+      "message": "Unauthorized"
+  }
+
+
+
+Request:
+  GET http://localhost:3000/users/me
+  HEADERS
+  Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjYsImVtYWlsIjoiY2Fyb2xpbmFAZ21haWwuY29tIiwiaWF0IjoxNjY4MjA0ODkxLCJleHAiOjE2NjgyMDU3OTF9.4VJg2NL9mJk4ph2pwcpuI3b29Cje0GiM4IzgmhYgp4o
+
+Response:
+  user info
+
+
+
+-- src/user/user.controller.ts
+import { Request } from 'express';
+import { Controller, Get, Req, UseGuards } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
+
+@Controller('users')
+export class UserController {
+  @UseGuards(AuthGuard('jwt'))
+  @Get('me')
+  getMe(@Req() req: Request) {
+    console.log({
+      user: req.user,
+    });
+    return 'uer info';
+  }
+}

@@ -1,0 +1,15 @@
+Basic Concepts
+    Module:
+      - We define a module to split/break down our code to make it more scalable
+        and easy to test
+      - We can separate different modules such as authentication, database, user, so on
+      - We can make this nested architecture!
+
+    Controllers
+      - Will call the server, will handle the request from client
+      - Will receive a request from internet, then call a function from the service
+      - Finally returns the result back to the client/brower
+      - Check headers, check body
+
+    Service
+      - Will worry about the business logic part

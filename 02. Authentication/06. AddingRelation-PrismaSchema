@@ -1,0 +1,71 @@
+Relationshuip between schemas
+    Definition:
+      - Quite often we need to make relationships between the different schemas:
+        - SQL => Between tables
+        -  NoSQL => Between collections, here we don't have really this concept!
+    
+    User vs Bookmark relationship:
+      - We want to define a 1 to Many relationship:
+        - 1 user can have multiple Bookmarks
+        - 1 Bookmark can be only of 1 user
+
+    Prisma schema
+      @relation() decorator:
+       - We use this to make a relationship:
+         - fields:[fieldName] => we set the fieldName of our schema we want to relate
+         - references:[] => we set the fieldName of the outside schema we want to relate
+      
+      Opposite relation field:
+        - Always in prisma we need to define in both sides of the schemas the relation
+          In this case we want to make 1 TO Many relationship!
+        - In the User schema we define a new field!
+      
+
+
+
+
+-- prisma/schema.prisma
+
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id Int @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  email String @unique
+  hash String
+
+  firtName String?
+  lastName String?
+
+  bookmarks Bookmark[]
+  
+  @@map("users")
+}
+
+model Bookmark {
+  id Int @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+
+  title String
+  description String?
+  link String
+
+  userId Int
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("bookmarks")
+}

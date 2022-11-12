@@ -1,0 +1,93 @@
+Set up Test database
+    Definition:
+      - Prisma is which makes the integation with our database actually. So it has to 
+        be able to migrate/connect to our database according to our environment
+      - Prisma doesn't manage Environment Variable by default, so currently is just
+        load the DATABASE_URL according the .env file that it detects. In other words
+        it is not able to detect .env.test or .env.prod automatically
+    
+    Environment Variables Prisma:
+      - We can't not make:
+        - create a .env.test
+        - create a .env.prod
+        THIS WON'T WORK WELL, is very tricky!!
+      - Cleanest way is to use dotenv-cli npm package!
+    
+    Without dotenv-cli solution:
+      Logic:
+       - If we don't want to use this package, we would end to do:
+         - Set in the AppModule => ConfigModule .envFilePath property => Specify where the env variable is
+         - We will have to create a lot of filler code, quite ugly!
+         
+    dotenv-cli package:
+      Installation:
+       - ❯ npm install -D dotenv-cli
+      Benefits:
+       - Keep our code cleaner
+    
+    Update our scripts:
+     Development scripts:
+      - The scripts in our .json file according:
+        - create/delete dev database(if use docker image)
+        - migrate using prisma command
+        We don't need to change anything because by default this takes .env file!
+     
+     Test scripts:
+      - The scripts in our .json file according:
+        - create/delete test database(if use docker image)
+        - migrate using prisma command:
+          Need to prefix with "dotenv -e .env.test --" to make sure takes the .env.test file!
+        - run our e2e tests:
+          Need to prefix with "dotenv -e .env.test --" to make sure takes the .env.test file!
+          
+    Creating a Hook:
+      Definition:
+       - We can create a simple hook script, this allows us to run a script once 
+         a previous one is executed
+       - In this case we want to restart our test database always before run tests:
+         - remove and create db image if we use docker
+         - migrate prisma
+        
+      Creation:
+       - "pre + scriptName": ...
+        =>  "pretest:e2e": "npm run db:test:restart"
+      Usage:
+       - We never run manually this script. Instead this is run automatically before
+         the "test:e2e" is executed
+
+    Summary:
+      - In summary we have used dotenv package to set exlicitly in the scripts 
+        the .env file we want to address
+      - We have create a pre-hook to clear our test database before run tests
+      
+
+     
+
+-- json scripts
+
+  "scripts": {
+    "prisma:dev:deploy": "prisma migrate deploy",
+    "db:dev:restart": "npm run prisma:dev:deploy",
+    "prisma:test:deploy": "dotenv -e .env.test -- prisma migrate deploy",
+    "db:test:restart": "npm run prisma:test:deploy",
+    ...
+    ...
+    "test:watch": "jest --watch",
+    "test:cov": "jest --coverage",
+    "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
+    "pretest:e2e": "npm run db:test:restart",
+    "test:e2e": "dotenv -e .env.test -- jest --watch --no-cache --config ./test/jest-e2e.json"
+  },
+
+-- .env
+DATABASE_URL='mysql://harold:1234@localhost:3306/mydb'
+JWT_SECRET="super-secret"
+
+
+-- .env.test
+DATABASE_URL='mysql://harold:1234@localhost:3306/test'
+JWT_SECRET="test-super-secret"
+
+
+-- terminal
+❯ npm run test:e2e 

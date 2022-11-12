@@ -1,0 +1,84 @@
+Setup general code template
+    Pre settings:
+      Test folder:
+       - In our src/ folder we have a test/ folder
+       - This folder contains a e2e spec file
+      Nestjs logic for test:
+       - Compile a module, take whole module(AppModule)
+       - Then will create a test module out of it 
+       - On this test module we can call Requests as we do in Postman/Insomnia
+      Run our tests
+       - There's a script already ready for us:
+         npm run test:e2e. But this requires some additional to avoid re-run each time:
+         - test:e2e": "jest --watch --no-cache --config ./test/jest-e2e.json"
+    
+    Setup code for our tests:
+      beforeAll():
+        Create testing module:
+         - We create on beforeAll() a new testing module(AppModule)
+        Create Nestjs app:
+         - This testing module(moduleRef) has some methods:
+           - .createNestApplication()  => We use this to create a new testing app Nestjs
+           - .createNestMicroservice()
+        Global Pipes:
+         - Everything defined in the main.ts(where is our server) need to be defined 
+           in this setup code for our test. In other words, everything defined in our server
+         - So here we pass global pipes in our test app!
+        Await init():
+         - we initialize our testing app!
+      afterAll():
+        Await close():
+         - We close our testing app!
+
+
+        
+
+    
+
+      
+-- json script
+"test:e2e": "jest --watch --no-cache --config ./test/jest-e2e.json"
+
+
+
+-- test/app.e2e-spec.ts
+import { Test, TestingModule } from '@nestjs/testing';
+import { INestApplication, ValidationPipe } from '@nestjs/common';
+
+import { AppModule } from './../src/app.module';
+
+describe('App e2e', () => {
+  let app: INestApplication;
+  beforeAll(async () => {
+    const moduleRef = await Test.createTestingModule({
+      imports: [AppModule],
+    }).compile();
+
+    app = moduleRef.createNestApplication();
+    app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
+    await app.init();
+  });
+
+  afterAll(() => {
+    app.close();
+  });
+
+  it.todo('should pass');
+});
+
+
+
+
+
+-- terminal
+Test Suites: 1 passed, 1 total
+Tests:       1 todo, 1 total
+ PASS  test/app.e2e-spec.ts (12.973 s)
+  App e2e
+    ✎ todo should pass
+
+Test Suites: 1 passed, 1 total
+Tests:       1 todo, 1 total
+Snapshots:   0 total
+Time:        13.139 s
+Ran all test suites related to changed files.

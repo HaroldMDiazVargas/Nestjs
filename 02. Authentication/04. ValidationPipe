@@ -1,0 +1,79 @@
+ValidationPipe-Class validator
+
+  
+      
+    ValidationPipe
+      - This use class-validator package and its declarative validation decorators.
+      - Also uses class-transformer libraries
+
+      Install dependencies
+        - npm install class-validator class-transformer
+      
+      ValidationPipe at app level
+        - This allows us to ensure all endpoints for receiving incorrect data
+        - We add in our main.ts:
+          - app.useGlobalPipes(new ValidationPipe());
+        - We can pass to this before line of code:
+          - app.useGlobalPipes(new ValidationPipe{whitelist: true  }));
+            Remove all fields are not defined in our dto!!
+
+      Decorators from class-validator:
+        - We use these decorators to add validation rules to our AuthDto
+          - @IsEmail()
+          - @IsNotEmpty()
+          - @IsString()
+          - ...
+        
+    
+    AuthDto interface => class:
+      - Previously this was an interface, for us it will be an interface but we 
+        need to mark as "class". The reason is because TypeScript doesn't store metadata
+        about interfaces or generics. This means will not store the data of the Decorators
+        So the validation will not possible, and we need to use concrete classes in our DTOs!
+
+
+-- src/auth/dto/auth.dto.ts
+import { IsEmail, IsNotEmpty, IsString } from 'class-validator';
+
+export class AuthDto {
+  @IsEmail()
+  @IsNotEmpty()
+  email: string;
+
+  @IsString()
+  @IsNotEmpty()
+  password: string;
+}
+
+
+
+
+-- src/main.ts
+import { ValidationPipe } from '@nestjs/common';
+import { NestFactory } from '@nestjs/core';
+import { AppModule } from './app.module';
+
+async function bootstrap() {
+  const app = await NestFactory.create(AppModule);
+  app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
+  await app.listen(3000);
+}
+bootstrap();
+
+
+
+-- console - dto when passing more than dto data(id:"1")
+{ email: 'harold@gmail.com', password: '1234' }
+
+
+-- console - Body Response when invalid and empty email
+{
+    "statusCode": 400,
+    "message": [
+        "email should not be empty",
+        "email must be an email"
+    ],
+    "error": "Bad Request"
+}
+
+    

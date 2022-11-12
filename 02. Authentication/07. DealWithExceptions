@@ -1,0 +1,61 @@
+Deal with exception
+    Definition:
+      - We will end with a 500 error code if we pass the same email that is already
+        in our database. This is because we have defined in our schema as "unique"
+      - Is better to display an error message more semantic
+    
+    Error codes in Prisma: => https://www.prisma.io/docs/reference/api-reference/error-reference#error-codes
+      - Prisma define codes for different errors so we can check and throw exceptions!
+
+
+    Try/catch
+      Try block:
+       - We put all our code about create new user and return that user in a try block!
+      Catch block:
+       - Here we need to verified if error is from Prisma, we use:
+         - PrismaClientKnownRequestError
+       - Then see if the error code is: 'P2002'
+       - Fianlly throw the error with the respective message!
+    
+-- src/auth/auth.service.ts
+
+import { PrismaService } from './../prisma/prisma.service';
+import { ForbiddenException, Injectable } from '@nestjs/common';
+import { User, Bookmark } from '@prisma/client';
+import * as argon from 'argon2';
+import { AuthDto } from './dto';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime';
+@Injectable()
+export class AuthService {
+  constructor(private prisma: PrismaService) {}
+  async signup(dto: AuthDto) {
+    // generate the password hash
+    const hash = await argon.hash(dto.password);
+
+    //  Save the new user in the db
+
+    try {
+      const user = await this.prisma.user.create({
+        data: {
+          email: dto.email,
+          hash,
+        },
+      });
+
+      delete user.hash;
+      // return the saved user
+      return user;
+    } catch (error) {
+      if (error instanceof PrismaClientKnownRequestError) {
+        if (error.code === 'P2002') {
+          throw new ForbiddenException('Credentials taken');
+        }
+      }
+      throw error;
+    }
+  }
+
+  signin() {
+    return { msg: 'I have signed in' };
+  }
+}

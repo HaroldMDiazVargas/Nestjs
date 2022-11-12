@@ -1,0 +1,50 @@
+HttpCode
+    Definition:
+      - If we paid attention to the response from server-to-client when we send:
+        - signin
+        - signup
+        We get 201 => This means that server creates somethind, but is not 200OK
+      - All this is because by default POST request will respond with 201
+
+
+    HttpCode() decorator:
+      - We can pass the status to return:
+        - 200 (magic number, high error prompt)
+        - HttpStatus.OK (Enum, low error prompt)
+        - HttpStatus.NOT_FOUND
+        - HttpStatus.Unauthorized
+    
+    Signup or signin:
+      - On signup we want the 201 => we really created something
+      - On signin we want to pass this decorator => we don't created something new
+
+
+-- src/auth/auth.controller.ts
+import { AuthDto } from './dto/auth.dto';
+import { AuthService } from './auth.service';
+import {
+  Body,
+  Controller,
+  HttpCode,
+  HttpStatus,
+  Post,
+  Req,
+} from '@nestjs/common';
+import { Request } from 'express';
+
+@Controller('auth')
+export class AuthController {
+  constructor(private authService: AuthService) {}
+
+  @Post('signup')
+  signup(@Body() dto: AuthDto) {
+    console.log(dto);
+    return this.authService.signup(dto);
+  }
+
+  @HttpCode(HttpStatus.OK)
+  @Post('signin')
+  signin(@Body() dto: AuthDto) {
+    return this.authService.signin(dto);
+  }
+}

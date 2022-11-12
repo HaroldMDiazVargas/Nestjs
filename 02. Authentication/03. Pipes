@@ -1,0 +1,39 @@
+Pipes in Nestjs
+
+    @Body() decorator args:
+      Select data:
+        - We can pass as first argument in string the name of our field we want to take
+          e.g @Body("email")
+      
+      Pipes:
+        - As second argument we can pass a pipe to apply to that value to transform it
+          e.g @Body("password", ParseIntPipe)
+    
+    Pipes:
+      - Function that transforms our data
+        - e.g String from the request: in a json, in the params, so on
+      Built-in pipes:
+       - ParseIntPipe
+       - ParseFloatPipe
+       - ParseBoolPipe
+       - PareArrayPipe
+       - ParseEnumPipe
+       - ParseUUIDPipe => Unique Identifier
+       - ValidationPipe
+
+
+
+-- code examples
+  @Post('signup')
+  signup(
+  @Body("email") email: string, 
+  @Body("password", ParseIntPipe) password: string) {
+      console.log(dto);
+      return this.authService.signup();
+    }
+
+  @Post('signin')
+  signin() {
+    return this.authService.signin();
+  }
+}

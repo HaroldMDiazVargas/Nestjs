@@ -1,0 +1,65 @@
+Playing with Req.user
+    Definition:
+      - Get the info of the current user based on the Access Token.
+      - Then returned to our service(form strategy to service) and we will get the 
+        req.user => which is the data we want to take from the user!
+    
+    We can do it in various way:
+      - Some people can just take the payload and include in the response to the client
+      - Other is get user object from database and remove the "password" or any property
+        we want to aovid to pass
+
+    async validate() to read from db:
+      Get the user:
+       - We get the user from the database using async/await
+       - then we remove the hash property 
+       - we return this user:
+         - If the user is NULL => will automacally return a 401 Unauthorized
+         - If exist => will be in req.user!
+
+
+
+-- src/auth/strategy/jwt.strategy.ts
+import { PrismaService } from './../../prisma/prisma.service';
+import { ConfigService } from '@nestjs/config';
+import { Injectable } from '@nestjs/common';
+import { PassportStrategy } from '@nestjs/passport';
+import { ExtractJwt, Strategy } from 'passport-jwt';
+
+@Injectable()
+export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
+  constructor(config: ConfigService, private prisma: PrismaService) {
+    super({
+      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      secretOrKey: config.get('JWT_SECRET'),
+    });
+  }
+
+  async validate(payload: { sub: number; email: string }) {
+    const user = await this.prisma.user.findUnique({
+      where: {
+        id: payload.sub,
+      },
+    });
+    delete user.hash;
+    return user;
+  }
+}
+
+
+
+-- src/auth/auth.service.ts
+import { JwtGuard } from './../auth/guard/jwt.guard';
+import { Request } from 'express';
+import { Controller, Get, Req, UseGuards } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
+
+@Controller('users')
+export class UserController {
+  @UseGuards(AuthGuard('jwt'))
+  @Get('me')
+  getMe(@Req() req: Request) {
+    return req.user;                    //This is the response!
+  }
+}
+

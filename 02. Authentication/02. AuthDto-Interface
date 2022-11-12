@@ -1,0 +1,63 @@
+AuthDto interface
+    DTOs(Data Transfer Objects):
+      - Just an object where we push our data from the request and we can run validation 
+        against them, and even we can have a shape for those dtos because we use TypeScript
+      - Nestjs uses this to implement validation, is really easy to use
+    
+    dto/
+      auth.dto.ts interface:
+       - Here we export interface where we define the shape of our AuthDto
+
+      Barrel export pattern:
+        - This is a pattern used to avoid import many paths, so this pattern helps us to 
+          rollup exports from erveral modules into a single convenient module
+        
+        dto/index.ts
+         - In this file we will export * from all our files we defined in the dto/ folder
+           and when we want to call any of these declrations, we just need to import 
+           from that folder instead of going to a specific file!
+    
+    Validation
+      - However even if we type our body with this interface, if we forget pass 
+        a value, we don't get an error. So we have not validator yet!
+    
+
+
+-- src/auth/dto/auth.dto.ts
+export interface AuthDto {
+  email: string;
+  password: string;
+}
+
+
+-- src/auth/dto/index.ts
+export * from './auth.dto';
+
+
+
+
+
+-- src/auth/auth.controller.ts
+import { AuthDto } from './dto/auth.dto';
+import { AuthService } from './auth.service';
+import { Body, Controller, Post, Req } from '@nestjs/common';
+import { Request } from 'express';
+
+@Controller('auth')
+export class AuthController {
+  constructor(private authService: AuthService) {}
+
+  @Post('signup')
+  signup(@Body() dto: AuthDto) {
+    console.log(dto);
+    return this.authService.signup();
+  }
+
+  @Post('signin')
+  signin() {
+    return this.authService.signin();
+  }
+}
+
+
+    

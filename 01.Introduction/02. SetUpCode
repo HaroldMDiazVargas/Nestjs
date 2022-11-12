@@ -1,0 +1,13 @@
+Setup project
+    Installation
+      - We run  => npm install -g @nestjs/cli
+      - This installs nestjs cli gobally
+    
+    Start a new project:
+      - We run => nest new projectName
+    
+    Create a new module:
+      - We run => nest g module moduleName
+    
+    Create a new service:
+      - We run => nest g service serviceName

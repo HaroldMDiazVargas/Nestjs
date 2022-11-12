@@ -1,0 +1,52 @@
+Prisma Module
+    Definition:
+      - Until here we haven't made the integration database to our modules, so 
+        we need to create a new module => PrismaModule
+    
+    PrismaModule as global module:
+      - Encapsulate all our logic regarding of the database in the module and export 
+        only what we need in our app
+      - We put a decorator "@Global()"right before of "@Module()" decorator; this is 
+        for make the exports[] in the module available access for other modules 
+        without need to explicitly add on "imports:[]" for each module we want to use this module 
+        and its exports(service)!!
+
+    PrismaService:
+      - Create our logic to connect to our database
+      - This extends PrismaClient class, because this allow us to connect to our database
+      
+      - In the constructor we call this parent class that we have inheritanced to instantiated the parent 
+        class:
+        - super({})
+          - Here we need to pass a complex object which define the URLConnection string!
+
+-- src/auth/prisma.module.ts
+import { Global, Module } from '@nestjs/common';
+import { PrismaService } from './prisma.service';
+
+@Global()
+@Module({
+  providers: [PrismaService],
+  exports: [PrismaService],
+})
+export class PrismaModule {}
+
+
+
+-- src/auth/prisma.service.ts
+import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { PrismaClient } from '@prisma/client';
+
+@Injectable()
+export class PrismaService extends PrismaClient {
+  constructor(config: ConfigService) {
+    super({
+      datasources: {
+        db: {
+          url: config.get('DATABASE_URL'),
+        },
+      },
+    });
+  }
+}

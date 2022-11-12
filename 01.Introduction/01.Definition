@@ -1,0 +1,10 @@
+Nestjs
+    Definition:
+      - Nodejs backend framework
+      - Fully uses TypeScript
+      - Solves problem such as architecute(weak point of express.js)
+      - Uses expressjs under the hood
+      - Allow us to create testable, modularity, scalable, structure
+      - Uses concepts as dependency injection
+      - Microservices, rest API, easily integrates with GraphQL
+      
