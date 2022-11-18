@@ -1,0 +1,215 @@
+Setup code
+    Dtos:
+      create bookmark dto:
+        - We create a dto for create a new bookmar, we specify the required fields!
+      edit bookmark dto:
+       - We create a dto for edit bookmark with optional!
+
+    Controller:
+      - We define in our controller all endpoints:
+        - get bookmarks
+        - get bookmark by id
+        - create a bookmark
+        - update bookmark by id
+        - delete bookmark by id ( we can decorate with HttpCode => to response with 204 if not exist!)
+      - We need to specify if we need to pass body, and for all we take userId 
+        from Req.user using the custom decorator GetUser(); this to always validate
+        that the bookmarks corresponds for the current user
+    
+    Service:
+      - We define all the methods with logic here. We use just prisma service to 
+        implement all CRUD operatios
+
+
+
+
+-- src/bookmak/dto/create-bookmark.dto.ts
+import { Test, TestingModule } from '@nestjs/testing';
+import { UserController } from './user.controller';
+
+describe('UserController', () => {
+  let controller: UserController;
+
+  beforeEach(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      controllers: [UserController],
+    }).compile();
+
+    controller = module.get<UserController>(UserController);
+  });
+
+  it('should be defined', () => {
+    expect(controller).toBeDefined();
+  });
+});
+
+
+
+
+-- src/bookmak/dto/edit-bookmark.dto.ts
+import { IsEmail, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+
+export class EditBookmarkDto {
+  @IsEmail()
+  @IsOptional()
+  title?: string;
+
+  @IsString()
+  @IsOptional()
+  description?: string;
+
+  @IsString()
+  @IsOptional()
+  link?: string;
+}
+
+
+
+
+
+-- src/bookmark/bookmark.controller.ts
+import { CreateBookmarkDto, EditBookmarkDto } from './dto';
+import { BookmarkService } from './bookmark.service';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  ParseIntPipe,
+  Patch,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
+import { JwtGuard } from '../auth/guard';
+import { GetUser } from '../auth/decorator';
+
+@UseGuards(JwtGuard)
+@Controller('bookmarks')
+export class BookmarkController {
+  constructor(private bookmarkService: BookmarkService) {}
+  @Get()
+  getBookmarks(@GetUser('id') userId: number) {
+    return this.bookmarkService.getBookmarks(userId);
+  }
+
+  @Get(':id')
+  getBookmarkById(
+    @GetUser('id') userId: number,
+    @Param('id', ParseIntPipe) bookmarkId: number,
+  ) {
+    return this.bookmarkService.getBookmarkById(userId, bookmarkId);
+  }
+
+  @Post()
+  createBookmark(
+    @GetUser('id') userId: number,
+    @Body() dto: CreateBookmarkDto,
+  ) {
+    return this.bookmarkService.createBookmark(userId, dto);
+  }
+
+  @Patch(':id')
+  editBookmarkById(
+    @GetUser('id') userId: number,
+    @Body() dto: EditBookmarkDto,
+    @Param('id', ParseIntPipe) bookmarkId: number,
+  ) {
+    return this.bookmarkService.editBookmarkById(userId, bookmarkId, dto);
+  }
+
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @Delete(':id')
+  deleteBookmarkById(
+    @GetUser('id') userId: number,
+    @Param('id', ParseIntPipe) bookmarkId: number,
+  ) {
+    return this.bookmarkService.deleteBookmarkById(userId, bookmarkId);
+  }
+}
+
+
+
+
+
+
+
+-- src/bookmark/bookmark.service.ts
+import { PrismaService } from './../prisma/prisma.service';
+import { Injectable, ForbiddenException } from '@nestjs/common';
+import { CreateBookmarkDto, EditBookmarkDto } from './dto';
+
+@Injectable()
+export class BookmarkService {
+  constructor(private prisma: PrismaService) {}
+  getBookmarks(userId: number) {
+    return this.prisma.bookmark.findMany({
+      where: {
+        userId,
+      },
+    });
+  }
+
+  getBookmarkById(userId: number, bookmarkId: number) {
+    return this.prisma.bookmark.findFirst({
+      where: {
+        id: bookmarkId,
+        userId,
+      },
+    });
+  }
+
+  async createBookmark(userId: number, dto: CreateBookmarkDto) {
+    const bookmark = await this.prisma.bookmark.create({
+      data: {
+        userId,
+        ...dto,
+      },
+    });
+
+    return bookmark;
+  }
+
+  async editBookmarkById(
+    userId: number,
+    bookmarkId: number,
+    dto: EditBookmarkDto,
+  ) {
+    const bookmark = await this.prisma.bookmark.findUnique({
+      where: {
+        id: bookmarkId,
+      },
+    });
+
+    if (!bookmark || bookmark.userId != userId)
+      throw new ForbiddenException('Access to resources denied');
+
+    return await this.prisma.bookmark.update({
+      where: {
+        id: bookmarkId,
+      },
+      data: {
+        ...dto,
+      },
+    });
+  }
+
+  async deleteBookmarkById(userId: number, bookmarkId: number) {
+    const bookmark = await this.prisma.bookmark.findUnique({
+      where: {
+        id: bookmarkId,
+      },
+    });
+
+    if (!bookmark || bookmark.userId != userId)
+      throw new ForbiddenException('Access to resources denied');
+
+    await this.prisma.bookmark.delete({
+      where: {
+        id: bookmarkId,
+      },
+    });
+  }
+}
