@@ -26,6 +26,8 @@ Setup general code template
          - So here we pass global pipes in our test app!
         Await init():
          - we initialize our testing app!
+         - We also can run server to our app using "app.lister(portNumber)"
+           this will be used for pactum as well!
       afterAll():
         Await close():
          - We close our testing app!
@@ -57,6 +59,7 @@ describe('App e2e', () => {
     app = moduleRef.createNestApplication();
     app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
     await app.init();
+    await app.listen(3000);
   });
 
   afterAll(() => {

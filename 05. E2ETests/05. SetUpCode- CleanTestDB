@@ -1,0 +1,90 @@
+Clean Test database
+    Definition:
+      - Until here, we have restart, create and deploy migration to a new database
+        if we use prisma-docker. This everytime we run our tests (script-level)
+      - HOWever, if we are in the same jest session and we make a change and re-run 
+        the tests for the same jest session, the database will not be cleaned
+    
+    Solution:
+      1. cascade
+         We have pass on the @relation() in our schema.prisma file pass:
+           user User @relation(fields: [userId], references: [id], onDelete: cascade)
+         When the parent of a bookmark/user) is deleted => the bookmark is deleted as well
+         To implement this we need to use and run migrations
+      2. prisma service => custom function
+         We create a new function in our prisma service e.g cleanDB(){}
+         So this function:
+          - Delete the bookmar
+          - Delete the user
+         To make sure that things are done in specific order and keep the 
+         deletes together we use transaction!
+
+    beforeAll(): 
+      - We need to use the custom function in this method of our test, so everytime 
+        we re-run our tests the test database is cleaned!
+      - we use app.get() method to get the instance of the PrismaService
+        and then we just call our custom method with the "await" identifier!
+
+
+
+
+
+-- src/prisma/prisma.service.ts
+import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { PrismaClient } from '@prisma/client';
+
+@Injectable()
+export class PrismaService extends PrismaClient {
+  constructor(config: ConfigService) {
+    super({
+      datasources: {
+        db: {
+          url: config.get('DATABASE_URL'),
+        },
+      },
+    });
+  }
+
+  cleanDb() {
+    return this.$transaction([
+      this.user.deleteMany(),
+      this.bookmark.deleteMany(),
+    ]);
+  }
+}
+
+
+
+
+-- test/app.e2e-spec.ts
+
+import { PrismaService } from './../src/prisma/prisma.service';
+import { Test } from '@nestjs/testing';
+import { INestApplication, ValidationPipe } from '@nestjs/common';
+import { AppModule } from './../src/app.module';
+
+describe('App (e2e)', () => {
+  let app: INestApplication;
+  let prisma: PrismaService;
+  beforeAll(async () => {
+    const moduleRef = await Test.createTestingModule({
+      imports: [AppModule],
+    }).compile();
+
+    app = moduleRef.createNestApplication();
+    app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
+    await app.init();
+    await app.listen(3000);
+    
+    prisma = app.get(PrismaService);
+    await prisma.cleanDb();
+  });
+
+  afterAll(() => {
+    app.close();
+  });
+
+  it.todo('should pass');
+});
+

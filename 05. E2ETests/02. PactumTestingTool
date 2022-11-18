@@ -15,5 +15,8 @@ Pactum
     Consideratios
       Set test database:
        - We want to keep separate our test db from the dev db
-      Set up the database 
-       - set up prisma service to be cleaned up everytime we run our test
+      Set up the database for each jest session
+       - set up prisma service to be cleaned up everytime we run our tests
+      Set up the database for the same jest session
+       - set up the database to be cleaned(but not restarted, create and deploy)
+         for the same jest session

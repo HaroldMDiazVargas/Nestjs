@@ -1,0 +1,102 @@
+Update user api
+    Definition:
+      - We define a new API in our user.controller.ts which makes the update of the
+        user
+    
+    Logic:
+      @Patch() decorator:
+       - We use this decorator to define a patch request
+       - We define a new function in our controller and call the service method that 
+         will make the logic of the update!
+       - We can create a dto custom for edit user, so we create a new dto folder 
+         and define this class(which really is used as interface)
+      
+      editUser method in user.service:
+       - We get the user using the prisma service and pass in .update() method 
+         in the object => data:, here we can pass our dto passed to update !
+       - remove the hash(password)
+       - return user to the client (response)
+
+
+
+
+-- src/user/dto/edit-user.dto.ts
+import { IsEmail, IsOptional, IsString } from 'class-validator';
+
+export class EditUserDto {
+  @IsEmail()
+  @IsOptional()
+  email?: string;
+
+  @IsString()
+  @IsOptional()
+  firstName?: string;
+
+  @IsString()
+  @IsOptional()
+  lastName?: string;
+}
+
+
+
+-- src/user/dto/index.ts
+export * from './edit-user.dto';
+
+
+
+
+
+-- src/user/user.controller.ts
+import { UserService } from './user.service';
+import { EditUserDto } from './dto/edit-user.dto';
+import { JwtGuard } from './../auth/guard/jwt.guard';
+import { Request } from 'express';
+import { Controller, Get, Req, Patch, UseGuards, Body } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
+
+import { User } from '@prisma/client';
+import { GetUser } from '../auth/decorator';
+
+@UseGuards(JwtGuard)
+@Controller('users')
+export class UserController {
+  constructor(private userService: UserService) {}
+  // @UseGuards(AuthGuard('jwt'))
+  @Get('me')
+  getMe(@GetUser() user: User) {
+    return user;
+  }
+
+  @Patch()
+  editUser(@GetUser('id') userId: number, @Body() dto: EditUserDto) {
+    return this.userService.editUser(userId, dto);
+  }
+}
+
+
+
+
+
+-- src/user/user.service.ts
+import { EditUserDto } from './dto/edit-user.dto';
+import { PrismaService } from './../prisma/prisma.service';
+import { Injectable } from '@nestjs/common';
+
+@Injectable()
+export class UserService {
+  constructor(private prisma: PrismaService) {}
+  async editUser(userId: number, dto: EditUserDto) {
+    const user = await this.prisma.user.update({
+      where: {
+        id: userId,
+      },
+      data: {
+        ...dto,
+      },
+    });
+
+    delete user.hash;
+
+    return user;
+  }
+}

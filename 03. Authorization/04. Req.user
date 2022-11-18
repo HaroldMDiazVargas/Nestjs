@@ -48,7 +48,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
 
 
 
--- src/auth/auth.service.ts
+-- src/user/user.controller.ts
 import { JwtGuard } from './../auth/guard/jwt.guard';
 import { Request } from 'express';
 import { Controller, Get, Req, UseGuards } from '@nestjs/common';

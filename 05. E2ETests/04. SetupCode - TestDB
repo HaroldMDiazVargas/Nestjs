@@ -57,7 +57,8 @@ Set up Test database
 
     Summary:
       - In summary we have used dotenv package to set exlicitly in the scripts 
-        the .env file we want to address
+        the .env file we want to address. This file contains connection string of our
+        database respective environment we are working on!
       - We have create a pre-hook to clear our test database before run tests
       
 
